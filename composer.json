@@ -1,5 +1,5 @@
 {
-  "name": "collection/collection",
+  "name": "ems/collection",
   "type": "library",
   "description": "Collection are Dictionaries, Maps, Lists and Iterators for php",
   "keywords": ["arrays", "dictionary", "lists", "python-php", "iterators"],
