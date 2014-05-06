@@ -94,7 +94,7 @@ class Dictionary implements Countable, IteratorAggregate, ArrayAccess{
      * @return Dictionary
      */
     public function copy(){
-        $reflection = new ReflectionClass($this);
+        $reflection = new \ReflectionClass($this);
         return $reflection->newInstance($this->_array);
     }
 
@@ -104,6 +104,19 @@ class Dictionary implements Countable, IteratorAggregate, ArrayAccess{
      */
     public function __clone(){
         return $this->copy();
+    }
+
+    /**
+     * @brief Returns a new Dictionary object without the key "key"
+     *
+     * @param mixed $key
+     * @see self::copy()
+     * @return Dictionary
+     */
+    public function without($key){
+        $copy = $this->copy();
+        unset($copy[$key]);
+        return $copy;
     }
 
     /**
