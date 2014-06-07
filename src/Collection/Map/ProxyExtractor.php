@@ -2,6 +2,8 @@
 
 use \DomainException;
 
+use Collection\ColumnList;
+
 class ProxyExtractor extends Extractor{
 
     /**
@@ -9,6 +11,8 @@ class ProxyExtractor extends Extractor{
      * @var Extractor
      */
     protected $srcExtractor = NULL;
+
+    protected $columns = NULL;
 
     public function __construct($keyAccessor=NULL, $valueAccessor=NULL){
         if(is_callable($keyAccessor)){
@@ -19,18 +23,41 @@ class ProxyExtractor extends Extractor{
         }
     }
 
+    public function getColumns(){
+        return $this->columns;
+    }
+
+    public function setColumns($columns){
+        if($columns instanceof ColumnList){
+            $this->columns = $columns;
+        }
+        else{
+            $this->columns = ColumnList::fromArray($columns);
+        }
+        return $this;
+    }
+
     protected function createProxy($item, $key, $value, $position){
-        $proxy = new ValueProxy($item);
+        return new ValueProxy($item);
+    }
+
+    protected function setProxyValues(ValueProxy &$proxy, $key, $value, $position){
         $proxy->_setKey($key);
         $proxy->_setValue($value);
         $proxy->_setPosition($position);
-        return $proxy;
+        if($this->columns){
+            $this->columns->setSrc($proxy->getSrc());
+            $proxy->setColumns($this->columns);
+        }
     }
 
     public function __invoke($originalKey, $item, $position=NULL){
         list($key, $value) = $this->srcExtractor->__invoke($originalKey, $item, $position);
+
         $proxy = $this->createProxy($item, $key, $value,
                                     $position);
+        $this->setProxyValues($proxy, $key, $value, $position);
+
         return array($key,$proxy);
     }
 

@@ -1,12 +1,15 @@
 <?php namespace Collection\Map;
 
 use Collection\FullProxy;
+use Collection\ColumnList;
 
 class ValueProxy extends FullProxy{
 
     protected $position = NULL;
     protected $key = NULL;
     protected $value = NULL;
+
+    protected $columns;
 
     public function getKey(){
         return $this->key;
@@ -45,4 +48,12 @@ class ValueProxy extends FullProxy{
         return parent::__get($name);
     }
 
+    public function getColumns(){
+        return $this->columns;
+    }
+
+    public function setColumns(ColumnList $columns){
+        $this->columns = $columns;
+        return $this;
+    }
 }
