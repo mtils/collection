@@ -3,6 +3,8 @@
 use Collection\ColumnList;
 use DomainException;
 use Iterator;
+use IteratorAggregate;
+use ArrayIterator;
 
 class Table implements Iterator{
 
@@ -31,7 +33,18 @@ class Table implements Iterator{
     }
 
     public function setSrc($src){
-        $this->src = $src;
+        if($src instanceof IteratorAggregate){
+            $this->src = $src->getIterator();
+        }
+        elseif($src instanceof Iterator){
+            $this->src = $src;
+        }
+        elseif(is_array($src)){
+            $this->src = new ArrayIterator($src);
+        }
+        else{
+            throw new DomainException('Src has to be array, Iterator or IteratorAggregate');
+        }
         return $this;
     }
 
@@ -136,7 +149,7 @@ class Table implements Iterator{
     }
 
     public function current(){
-        $current = current($this->src);
+        $current = $this->src->current();
         $this->columns->setSrc($current);
         return $current;
     }
@@ -147,15 +160,15 @@ class Table implements Iterator{
 
     public function next(){
         $this->iteratorPos++;
-        next($this->src);
+        $this->src->next();
     }
 
     public function rewind(){
-        reset($this->src);
+        $this->src->rewind();
         $this->iteratorPos = 0;
     }
 
     public function valid(){
-        return (key($this->src) !== NULL);
+        return $this->src->valid();
     }
 }
