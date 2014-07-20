@@ -28,23 +28,29 @@ class Table implements Iterator{
 
     protected $src;
 
+    protected $srcIterator;
+
     public function getSrc(){
         return $this->src;
     }
 
     public function setSrc($src){
+
         if($src instanceof IteratorAggregate){
-            $this->src = $src->getIterator();
+            $this->srcIterator = $src->getIterator();
         }
         elseif($src instanceof Iterator){
-            $this->src = $src;
+            $this->srcIterator = $src;
         }
         elseif(is_array($src)){
-            $this->src = new ArrayIterator($src);
+            $this->srcIterator = new ArrayIterator($src);
         }
         else{
             throw new DomainException('Src has to be array, Iterator or IteratorAggregate');
         }
+
+        $this->src = $src;
+
         return $this;
     }
 
@@ -149,7 +155,7 @@ class Table implements Iterator{
     }
 
     public function current(){
-        $current = $this->src->current();
+        $current = $this->srcIterator->current();
         $this->columns->setSrc($current);
         return $current;
     }
@@ -160,15 +166,15 @@ class Table implements Iterator{
 
     public function next(){
         $this->iteratorPos++;
-        $this->src->next();
+        $this->srcIterator->next();
     }
 
     public function rewind(){
-        $this->src->rewind();
+        $this->srcIterator->rewind();
         $this->iteratorPos = 0;
     }
 
     public function valid(){
-        return $this->src->valid();
+        return $this->srcIterator->valid();
     }
 }
