@@ -35,22 +35,7 @@ class Table implements Iterator{
     }
 
     public function setSrc($src){
-
-        if($src instanceof IteratorAggregate){
-            $this->srcIterator = $src->getIterator();
-        }
-        elseif($src instanceof Iterator){
-            $this->srcIterator = $src;
-        }
-        elseif(is_array($src)){
-            $this->srcIterator = new ArrayIterator($src);
-        }
-        else{
-            throw new DomainException('Src has to be array, Iterator or IteratorAggregate');
-        }
-
         $this->src = $src;
-
         return $this;
     }
 
@@ -67,6 +52,21 @@ class Table implements Iterator{
             $col->_setTable($this);
         }
         return $this;
+    }
+
+    protected function createSrcIterator($src){
+        if($src instanceof IteratorAggregate){
+            return $src->getIterator();
+        }
+        elseif($src instanceof Iterator){
+            return $src;
+        }
+        elseif(is_array($src)){
+            return new ArrayIterator($src);
+        }
+        else{
+            throw new DomainException('Src has to be array, Iterator or IteratorAggregate');
+        }
     }
 
     public function addSortColumn($colName, $order){
@@ -170,6 +170,7 @@ class Table implements Iterator{
     }
 
     public function rewind(){
+        $this->srcIterator = $this->createSrcIterator($this->src);
         $this->srcIterator->rewind();
         $this->iteratorPos = 0;
     }
