@@ -1,6 +1,8 @@
 <?php namespace Collection\Table;
 
 use Collection\Column as BaseColumn;
+use XType\AbstractType;
+use Collection\StringList;
 use DomainException;
 
 class Column extends BaseColumn{
@@ -8,6 +10,50 @@ class Column extends BaseColumn{
     protected $table;
 
     protected $valueFormatter;
+
+    protected $xtype2CssClass = array(
+        1 => 'custom',
+        2 => 'number',
+        3 => 'string',
+        4 => 'bool',
+        5 => 'complex',
+        6 => 'temporal',
+        7 => 'mixed'
+    );
+
+    /**
+    * @brief CSS Classes
+    * @var StringList
+    */
+    protected $cssClasses;
+
+    public function getCssClasses(){
+        if(!$this->cssClasses){
+            $this->cssClasses = $this->createCssClasses();
+        }
+        return $this->cssClasses;
+    }
+
+    public function setCssClasses(StringList $cssClasses){
+        $this->cssClasses = $cssClasses;
+        return $this;
+    }
+
+    protected function createCssClasses(){
+        $classes = new StringList();
+        if($this->valueFormatter instanceof AbstractType){
+            if(isset($this->xtype2CssClass[$this->valueFormatter->getGroup()])){
+                $classes->append($this->xtype2CssClass[$this->valueFormatter->getGroup()]);
+            }
+        }
+        if($acc = $this->getAccessor()){
+            $search = array('(',')','->','[',"'",'"');
+            $replace = array('','','','',"",'');
+            $cleaned = str_replace($search, $replace, $acc);
+            $classes->append($acc);
+        }
+        return $classes;
+    }
 
 
     public function getTable(){
