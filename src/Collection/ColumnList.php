@@ -10,6 +10,8 @@ class ColumnList  implements Countable, IteratorAggregate{
 
     public $_src;
 
+    protected $valueAccessor;
+
     public function columns(){
         return $this->_columns;
     }

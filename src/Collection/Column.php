@@ -7,6 +7,8 @@ class Column{
 
     protected $accessor;
 
+    protected $valueGetter;
+
     protected $title;
 
     protected $src;
@@ -21,14 +23,28 @@ class Column{
         return $this->accessor;
     }
 
-    public function setAccessor($accessor){
-        $this->_needsMethodAccess = (strpos($accessor,'(') !== FALSE);        
+    public function setAccessor($accessor, callable $valueGetter=null){
+
+        $this->_needsMethodAccess = (strpos($accessor,'(') !== FALSE);
+
         if($this->_needsMethodAccess){
             $this->accessor = $this->extractMethodAccessorString($accessor);
         }
         else{
             $this->accessor = $accessor;
         }
+
+        $this->valueGetter = $valueGetter;
+
+        return $this;
+    }
+
+    public function getValueGetter(){
+        return $this->valueGetter;
+    }
+
+    public function setValueGetter(callable $valueGetter){
+        $this->valueGetter = $valueGetter;
         return $this;
     }
 
@@ -49,11 +65,17 @@ class Column{
     }
 
     public function getValue(){
+
         if($this->columnList){
             $src = $this->columnList->_src;
         }
         else{
             $src = $this->src;
+        }
+
+        if($this->valueGetter){
+            $func = $this->valueGetter;
+            return $func($this, $src, $this->accessor);
         }
 
         if(is_object($src)){
