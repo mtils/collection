@@ -23,7 +23,6 @@ class DottedObjectAccess{
             }
         }
 
-        print_r($parts);
         return $accessor;
     }
 
