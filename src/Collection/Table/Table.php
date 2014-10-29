@@ -1,10 +1,13 @@
 <?php namespace Collection\Table;
 
 use Collection\ColumnList;
+use Collection\StringList;
+use Collection\ClassNamer;
 use DomainException;
 use Iterator;
 use IteratorAggregate;
 use ArrayIterator;
+use UnderflowException;
 
 class Table implements Iterator{
 
@@ -30,6 +33,16 @@ class Table implements Iterator{
 
     protected $srcIterator;
 
+    protected $itemClass;
+
+    protected $calculatedItemClass;
+
+    /**
+    * @brief CSS Classes
+    * @var StringList
+    */
+    protected $cssClasses;
+
     public function getSrc(){
         return $this->src;
     }
@@ -37,6 +50,46 @@ class Table implements Iterator{
     public function setSrc($src){
         $this->src = $src;
         return $this;
+    }
+
+    public function getItemClass(){
+
+        if(!$this->itemClass){
+            return $this->getCalculatedItemClass();
+        }
+
+        return $this->itemClass;
+
+    }
+
+    public function setItemClass($itemClass){
+        $this->itemClass = $itemClass;
+    }
+
+    protected function getCalculatedItemClass(){
+
+        if(!$this->calculatedItemClass){
+
+            foreach($this->createSrcIterator() as $item){
+                if(is_object($item)){
+                    $className = get_class($item);
+                    if($className == 'stdClass'){
+                        if(isset($item->className)){
+                            $this->calculatedItemClass = $item->className;
+                            break;
+                        }
+                    }
+                    $this->calculatedItemClass = $className;
+                    break;
+                }
+            }
+            if(!$this->calculatedItemClass){
+                throw new UnderflowException('Could not determine itemClass, please set it manually via setItemClass');
+            }
+        }
+
+        return $this->calculatedItemClass;
+
     }
 
     public function getColumns(){
@@ -52,6 +105,30 @@ class Table implements Iterator{
             $col->_setTable($this);
         }
         return $this;
+    }
+
+    public function getCssClasses(){
+        if(!$this->cssClasses){
+            $this->cssClasses = $this->createCssClasses();
+        }
+        return $this->cssClasses;
+    }
+
+    public function setCssClasses(StringList $cssClasses){
+        $this->cssClasses = $cssClasses;
+        return $this;
+    }
+
+    protected function createCssClasses(){
+
+        $classes = new StringList();
+
+        try{
+            $classes->append(ClassNamer::cssClass($this->getItemClass()));
+        }
+        catch(UnderflowException $e){}
+
+        return $classes;
     }
 
     protected function createSrcIterator($src){
@@ -152,6 +229,14 @@ class Table implements Iterator{
 
     public function __get($name){
         return $this->{"get$name"}();
+    }
+
+    public function __set($name, $value){
+        return $this->{"set$name"}($value);
+    }
+
+    public function __isset($name){
+        return method_exists($this, 'get'.ucfirst($name));
     }
 
     public function current(){
