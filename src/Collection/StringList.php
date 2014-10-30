@@ -30,7 +30,7 @@ class StringList extends OrderedList{
         $string = (string)$string;
 
         if($separator === ''){
-            return new MDF_Array_StringList(str_split($string),'');
+            return new StringList(str_split($string),'');
         }
 
         $prefix = '';
