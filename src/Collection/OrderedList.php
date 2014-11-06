@@ -179,7 +179,19 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
             $this->_array = array_values($src);
             return $this;
         }
-        
+    }
+
+    public function first(){
+        if(isset($this->_array[0])){
+            return $this->_array[0];
+        }
+    }
+
+    public function last(){
+        $lastIndex = (count($this->_array)-1);
+        if(isset($this->_array[$lastIndex])){
+            return $this->_array[$lastIndex];
+        }
     }
 
     /**
