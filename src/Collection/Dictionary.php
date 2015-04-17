@@ -208,33 +208,6 @@ class Dictionary implements Countable, IteratorAggregate, ArrayAccess{
     }
 
     /**
-     * Returns an iterator over $key=>$value
-     * 
-     * @return ArrayIterator
-     */
-    public function iterItems(){
-        return $this->items()->getIterator();
-    }
-
-    /**
-     * Returns an iterator over $this->keys()
-     * 
-     * @return ArrayIterator
-     */
-    public function iterKeys(){
-        return new ArrayIterator(array_keys($this->_array));
-    }
-
-    /**
-     * Returns an iterator over $this->values()
-     * 
-     * @return ArrayIterator
-     */
-    public function iterValues(){
-        return new ArrayIterator(array_values($this->_array));
-    }
-
-    /**
      * Returns a OrderedList of keys (scalars) of the hash
      * 
      * @return OrderedList
@@ -273,7 +246,7 @@ class Dictionary implements Countable, IteratorAggregate, ArrayAccess{
      * @param mixed $key
      * @param mixed $default
      */
-    public function setDefault($key, $default=NULL){
+    public function returnOrSet($key, $default=NULL){
         if($this->offsetExists($key)){
             return $this->offsetGet($key);
         }
