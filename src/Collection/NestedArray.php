@@ -18,6 +18,8 @@ use Collection\Iterator\ArrayIterator;
  *      'surname'       => 'Tils',
  *      'address.id'    => 578,
  *      'address.street'=> 'Elmstreet 13',
+ *      'category.id'   => 83,
+ *      'category.name' => 'delivery',
  *      'category.parent.id'    => 27,
  *      'category.parent.name'  => 'worker',
  *      'age'                   => 86,
@@ -31,9 +33,11 @@ use Collection\Iterator\ArrayIterator;
  *          'surname'       => 'Tils',
  *          'address' => [
  *              'id'    => 578,
- *               'street'=> 'Elmstreet 13',
+ *              'street'=> 'Elmstreet 13',
  *           ],
  *          'category' => [
+ *              'id'   => 83
+ *              'name' => 'delivery'
  *              'parent' => [
  *                  'id'    => 27,
  *                  'name'  => 'worker'
@@ -42,8 +46,41 @@ use Collection\Iterator\ArrayIterator;
  *          'age'           => 86,
  * ];
  *
- * The "path" separator can be what you want and the query separator can be
- * a different. So you could query a file hierarchy with dots
+ * If you query the array with dots: $nestedArray['category.parent']
+ * you get an nested array:
+ * [
+ *     'id'   => 83,
+ *     'name' => 'delivery',
+ *     'parent'  => [
+ *         'id'   => 27
+ *         'name' => 'worker'
+ *     ]
+ * ]
+ *
+ * If you query the array with a single dot you will get only the unnested
+ * properties $nestedArray['.']:
+ * 
+ * [
+ *     'id'            => 13,
+ *     'name'          => 'Michael',
+ *     'surname'       => 'Tils',
+ *     'age'           => 86,
+ * ];
+ *
+ * If you append a trailing dot to your query you will only get the root:
+ * $nestedArray['category.parent.'] :
+ *
+ * [
+ *     'id'   => 83,
+ *     'name' => 'delivery'
+ * ]
+ *
+ *
+ * If you like to retrieve new NestedArray instances insteadof arrays call it
+ * like a function:
+ * $nestedArray('category.parent') => Returns new nested array with the
+ * resulting array of this query
+ * 
  **/
 class NestedArray implements ArrayAccess, Countable, IteratorAggregate
 {
@@ -64,6 +101,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     protected $nestedCache;
 
     /**
+     * 
      * @var string
      **/
     protected $querySeparator = '.';
@@ -73,12 +111,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      **/
     protected $separator = '.';
 
-    public function __construct(array $array, $separator='.',
-                                $querySeparator=null)
+    public function __construct(array $array, $separator='.')
     {
         $this->setSrc($array);
         $this->separator = $separator;
-        $this->querySeparator = $querySeparator ?: $separator;
     }
 
     /**
@@ -120,6 +156,11 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
 
         if (isset($this->array[$offset])) {
             return $this->array[$offset];
+        }
+
+        if (static::endsWith($offset, $this->querySeparator)) {
+            $cleaned = static::removeTrailing($offset);
+            return $this->sub($cleaned)->root();
         }
 
         return $this->group($offset);
@@ -239,6 +280,21 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     }
 
     /**
+     * Callable api, same as array api but returns result array as NestedArray
+     * object
+     *
+     * @param string $offset
+     * @return static
+     **/
+    public function __invoke($offset='.')
+    {
+        if ($offset == '.') {
+            return $this;
+        }
+        return $this->sub($offset);
+    }
+
+    /**
      * Returns the source (flat) array
      *
      * @return array
@@ -277,7 +333,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
         foreach ($flat as $key => $val) {
 
             // Get parent parts and the current leaf
-            $parts = explode($delimiter, $key);
+            $parts = static::splitPath($key, $delimiter);
             $leafPart = array_pop($parts);
 
             // Build parent structure
@@ -342,12 +398,48 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
         $root = [];
 
         foreach ($flat as $key=>$value) {
-            if (strpos($key, $separator) === false) {
+            if (strpos($key, $separator) === false && !is_array($value)) {
                 $root[$key] = $value;
             }
         }
 
         return $root;
+    }
+
+    /**
+     * Splits the path into an array
+     *
+     * @param string $path
+     * @param string $separator (degault '.')
+     * @return array
+     **/
+    public static function splitPath($path, $separator='.')
+    {
+        $regex = '/(?<=\w)(' . preg_quote($separator, '/') . ')(?=\w)/';
+        return preg_split($regex, $path, -1);//, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+    }
+
+    /**
+     * Checks if the $path ends with $needle
+     *
+     * @param string $path
+     * @param string $needle
+     * @return bool
+     **/
+    public static function endsWith($path, $needle)
+    {
+        return (string) $needle === substr($path, -strlen($needle));
+    }
+
+    /**
+     * Removes the last char of path
+     *
+     * @param string $path
+     * @return string
+     **/
+    protected static function removeTrailing($path)
+    {
+        return substr($path, 0, strlen($path)-1);
     }
 
     /**
@@ -360,4 +452,5 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
         $this->rootCache = null;
         $this->nestedCache = null;
     }
+
 }

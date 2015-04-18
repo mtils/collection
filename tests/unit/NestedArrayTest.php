@@ -62,6 +62,84 @@ class NestedArrayTest extends PHPUnit_Framework_TestCase
 
     }
 
+    public function testLeadingSeparatorDoesntProduceChildren()
+    {
+        $array = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            '.id'           => 578,
+            'address.street'=> 'Elmstreet 13'
+        ];
+
+        $grouper = $this->newGrouper($array);
+
+        $resultArray = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            '.id'           => 578,
+            'address' => [
+                'street' => 'Elmstreet 13'
+            ]
+        ];
+
+        $this->assertEquals($resultArray, $grouper->nested());
+
+    }
+
+    public function testTrailingSeparatorDoesntProduceChildren()
+    {
+        $array = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            'id.'           => 578,
+            'address.street'=> 'Elmstreet 13'
+        ];
+
+        $grouper = $this->newGrouper($array);
+
+        $resultArray = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            'id.'           => 578,
+            'address' => [
+                'street' => 'Elmstreet 13'
+            ]
+        ];
+
+        $this->assertEquals($resultArray, $grouper->nested());
+
+    }
+
+    public function testLeadingAndTrailingSeparatorsDontProduceChildren()
+    {
+        $array = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            '.id.'          => 578,
+            'address.street'=> 'Elmstreet 13'
+        ];
+
+        $grouper = $this->newGrouper($array);
+
+        $resultArray = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            '.id.'          => 578,
+            'address' => [
+                'street' => 'Elmstreet 13'
+            ]
+        ];
+
+        $this->assertEquals($resultArray, $grouper->nested());
+
+    }
+
     public function testOffsetGetGroupOnThreeLevels()
     {
         $array = [
@@ -152,6 +230,32 @@ class NestedArrayTest extends PHPUnit_Framework_TestCase
 
     }
 
+    public function testLeadingQuerySeparatorReturnsRootOfResult()
+    {
+        $array = [
+            'id'                    => 13,
+            'name'                  => 'Michael',
+            'surname'               => 'Tils',
+            'address.id'            => 578,
+            'address.street'        => 'Elmstreet 13',
+            'category.id'           => 83,
+            'category.name'         => 'delivery',
+            'category.parent.id'    => 27,
+            'category.parent.name'  => 'worker',
+            'age'                   => 86,
+        ];
+
+        $categoryRoot = [
+            'id'                    => 83,
+            'name'                => 'delivery'
+        ];
+
+        $grouper = $this->newGrouper($array);
+
+        $this->assertEquals($categoryRoot, $grouper['category.'] );
+
+    }
+
     public function testOffsetGetWithDifferentQuerySeparator()
     {
         $array = [
@@ -179,7 +283,7 @@ class NestedArrayTest extends PHPUnit_Framework_TestCase
             'name'     =>  'job'
         ];
 
-        $grouper = $this->newGrouper($array,'__','.');
+        $grouper = $this->newGrouper($array,'__');
 
         $this->assertEquals($addressArray, $grouper['address']);
         $this->assertEquals($categoryArray, $grouper['category.parent']);
@@ -310,6 +414,29 @@ class NestedArrayTest extends PHPUnit_Framework_TestCase
 
     }
 
+    public function testInvokeReturnsSameAsSub()
+    {
+        $array = [
+            'id'            => 13,
+            'name'          => 'Michael',
+            'surname'       => 'Tils',
+            'address.id'    => 578,
+            'address.street'=> 'Elmstreet 13',
+            'category.parent.id'    => 27,
+            'category.parent.name'  => 'worker',
+            'age'                   => 86,
+        ];
+
+
+        $grouper = $this->newGrouper($array)->sub('category')->sub('parent');
+        $root = $this->newGrouper($array);
+
+        $this->assertCount(2, $grouper);
+        $this->assertEquals($root('category.parent')->root(), $grouper->root());
+        $this->assertEquals($root('.')->root(), $root->root());
+
+    }
+
     public function testSubReturnsEmptyInstanceIfEmptyArray()
     {
         $array = [];
@@ -335,9 +462,9 @@ class NestedArrayTest extends PHPUnit_Framework_TestCase
 
     }
 
-    protected function newGrouper($array=[], $sep='.', $querySep=null)
+    protected function newGrouper($array=[], $sep='.')
     {
-        return new NestedArray($array, $sep, $querySep);
+        return new NestedArray($array, $sep);
     }
 
 }
