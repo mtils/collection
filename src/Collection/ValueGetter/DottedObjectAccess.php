@@ -1,5 +1,6 @@
 <?php namespace Collection\ValueGetter;
 
+use DateTime;
 use Collection\Column;
 
 class DottedObjectAccess{
@@ -15,15 +16,18 @@ class DottedObjectAccess{
         $parts = explode($this->dot, $accessor);
 
         $node = $src;
-        foreach($parts as $part){
-            if($node = $node->$part){
-                if(!is_object($node)){
-                    return $node;
-                }
+
+        foreach ($parts as $part) {
+
+            $node = $node->$part;
+
+            if(!is_object($node) || $node instanceof DateTime){
+                return $node;
             }
+
         }
 
-        return $accessor;
+        return '';
     }
 
 }
