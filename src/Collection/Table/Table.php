@@ -5,11 +5,13 @@ use Collection\StringList;
 use Collection\ClassNamer;
 use DomainException;
 use Iterator;
+use Countable;
 use IteratorAggregate;
 use ArrayIterator;
 use UnderflowException;
 
-class Table implements Iterator{
+class Table implements Iterator, Countable
+{
 
     protected $columns;
 
@@ -158,13 +160,28 @@ class Table implements Iterator{
         if(isset($this->sortColumns[$colName])){
             return $this->sortColumns[$colName];
         }
+
+        if (isset($_GET[$this->sortParamName]) &&
+            $_GET[$this->sortParamName] == $colName &&
+            isset($_GET[$this->orderParamName])){
+                return $_GET[$this->orderParamName];
+        }
         return '';
     }
 
     public function buildLink(array $addParams=array()){
-        $builder = $this->linkBuilder;
+
         $params = array_merge($this->linkParams, $addParams);
-        return $builder($this, $params);
+
+        if ($builder = $this->linkBuilder) {
+            return $builder($this, $params);
+        }
+
+        $allParams = array_merge($_GET, $params);
+
+        $parsed = parse_url($_SERVER['REQUEST_URI']);
+
+        return '/' . trim($parsed['path'],'/') . '?'.http_build_query($allParams);
     }
 
     public function getLinkBuilder(){
@@ -258,6 +275,14 @@ class Table implements Iterator{
         $this->srcIterator = $this->createSrcIterator($this->src);
         $this->srcIterator->rewind();
         $this->iteratorPos = 0;
+    }
+
+    public function count()
+    {
+        if ($this->src) {
+            return count($this->src);
+        }
+        return 0;
     }
 
     public function valid(){
