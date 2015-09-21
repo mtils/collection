@@ -407,6 +407,43 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     }
 
     /**
+     * Converts a nested array to a dotted one
+     *
+     * @param array $nested The nested source array
+     * @param string $connector Levels connector
+     * @return array
+     **/
+    public static function flat(array $nested, $connector = '.')
+    {
+        $result = [];
+        static::flatArray($result, $nested, $connector);
+        return $result;
+    }
+
+    /**
+     * Recursively converts nested array into a flat one with keys preserving.
+     *
+     * @param array $result Resulting array
+     * @param array $array Source array
+     * @param string $prefix Key's prefix
+     * @param string $connector Levels connector
+     **/
+    protected static function flatArray(array &$result, array $array, $connector = '.', $prefix = null)
+    {
+
+        foreach ($array as $key => $value) {
+
+            if (is_array($value)) {
+                static::flatArray($result, $value, $connector, $prefix.$key.$connector);
+                continue;
+            }
+
+            $result[$prefix.$key] = $value;
+
+        }
+    }
+
+    /**
      * Splits the path into an array
      *
      * @param string $path
