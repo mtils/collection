@@ -1,8 +1,9 @@
 <?php 
 
 use Collection\NestedArray;
+use PHPUnit\Framework\TestCase;
 
-class NestedArrayTest extends PHPUnit_Framework_TestCase
+class NestedArrayTest extends TestCase
 {
 
     public function testOffsetGetOnOneLevel()
