@@ -21,14 +21,21 @@ class Dictionary implements Countable, IteratorAggregate, ArrayAccess{
      */
     public function __construct($array=NULL){
         $this->_array = $array;
+        if (!$array) {
+            $this->_array = [];
+        }
     }
 
     /**
      * (non-PHPdoc)
      * @see Countable::count()
      */
-    public function count(){
-        return count($this->_array);
+    public function count()
+    {
+        if (is_array($this->_array) || $this->_array instanceof Countable) {
+            return count($this->_array);
+        }
+        return 0;
     }
 
     /**

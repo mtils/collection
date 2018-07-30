@@ -279,8 +279,13 @@ class Table implements Iterator, Countable
 
     public function count()
     {
-        if ($this->src) {
+        if (is_array($this->src) || $this->src instanceof \Countable) {
             return count($this->src);
+        }
+        if ($this->src instanceof \Traversable) {
+//             dd($this->src);
+        //             dd(iterator_to_array($this->src));
+            return count(iterator_to_array($this->src));
         }
         return 0;
     }
