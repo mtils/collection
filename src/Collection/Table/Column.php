@@ -7,11 +7,14 @@ use DomainException;
 
 class Column extends BaseColumn{
 
-    protected $table;
+    protected ?Table $table;
 
-    protected $valueFormatter;
+    /**
+     * @var ?callable
+     */
+    protected mixed $valueFormatter = null;
 
-    protected $xtype2CssClass = array(
+    protected array $xtype2CssClass = [
         1 => 'custom',
         2 => 'number',
         3 => 'string',
@@ -19,27 +22,30 @@ class Column extends BaseColumn{
         5 => 'complex',
         6 => 'temporal',
         7 => 'mixed'
-    );
+    ];
 
     /**
     * @brief CSS Classes
-    * @var StringList
+    * @var ?StringList
     */
-    protected $cssClasses;
+    protected ?StringList $cssClasses=null;
 
-    public function getCssClasses(){
+    public function getCssClasses() : StringList
+    {
         if(!$this->cssClasses){
             $this->cssClasses = $this->createCssClasses();
         }
         return $this->cssClasses;
     }
 
-    public function setCssClasses(StringList $cssClasses){
+    public function setCssClasses(StringList $cssClasses) : static
+    {
         $this->cssClasses = $cssClasses;
         return $this;
     }
 
-    protected function createCssClasses(){
+    protected function createCssClasses() : StringList
+    {
         $classes = new StringList();
         if($this->valueFormatter instanceof AbstractType){
             if(isset($this->xtype2CssClass[$this->valueFormatter->getGroup()])){
@@ -56,31 +62,37 @@ class Column extends BaseColumn{
     }
 
 
-    public function getTable(){
+    public function getTable() : ?Table
+    {
         return $this->table;
     }
 
-    public function _setTable(Table $table){
+    public function _setTable(Table $table) : static
+    {
         $this->table = $table;
         return $this;
     }
 
-    public function isSortColumn(){
+    public function isSortColumn() : bool
+    {
         return $this->table->hasSortColumn($this->accessor);
     }
 
     /**
      * @brief For __get
      **/
-    public function getSorted(){
+    public function getSorted() : bool
+    {
         return $this->isSortColumn();
     }
 
-    public function getSortOrder(){
+    public function getSortOrder() : int
+    {
         return $this->table->getSortOrder($this->accessor);
     }
 
-    public function getSortHref(){
+    public function getSortHref() : string
+    {
 
         $ascName = $this->table->getAscName();
         $descName = $this->table->getDescName();
@@ -101,19 +113,19 @@ class Column extends BaseColumn{
 
     }
 
-    public function getValueFormatter(){
+    public function getValueFormatter() : ?callable
+    {
         return $this->valueFormatter;
     }
 
-    public function setValueFormatter($formatter){
-        if(!is_callable($formatter)){
-            throw new DomainException('Formatter has to be callable');
-        }
+    public function setValueFormatter(callable $formatter) : static
+    {
         $this->valueFormatter = $formatter;
         return $this;
     }
 
-    public function getValue(){
+    public function getValue() : mixed
+    {
         $value = parent::getValue();
         if($this->valueFormatter){
             $formatter = $this->valueFormatter;

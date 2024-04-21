@@ -1,14 +1,16 @@
 <?php namespace Collection;
 
-class StringDictionary extends Dictionary{
+class StringDictionary extends Dictionary
+{
 
-    public $rowDelimiter = "\n";
-    public $keyValueDelimiter = '=>';
-    public $prefix = '';
-    public $suffix = '';
+    public string $rowDelimiter = "\n";
+    public string $keyValueDelimiter = '=>';
+    public string $prefix = '';
+    public string $suffix = '';
 
-    public function __toString(){
-        $rows = array();
+    public function __toString() : string
+    {
+        $rows = [];
         foreach($this as $key=>$value){
             $rows[] = "{$key}{$this->keyValueDelimiter}{$value}";
         }

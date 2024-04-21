@@ -3,13 +3,15 @@
 use DateTime;
 use Collection\Column;
 
-class DottedObjectAccess{
+class DottedObjectAccess
+{
 
-    public $dot = '.';
+    public string $dot = '.';
 
-    public function __invoke(Column $column, $src, $accessor){
+    public function __invoke(Column $column, $src, $accessor) : string
+    {
 
-        if(strpos($accessor,$this->dot) === FALSE){
+        if(!str_contains($accessor, $this->dot)){
             return $src->$accessor;
         }
 

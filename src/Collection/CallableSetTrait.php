@@ -2,13 +2,17 @@
 
 use OutOfBoundsException;
 use Collection\Iterator\ArrayIterator;
+use ReturnTypeWillChange;
 
 trait CallableSetTrait
 {
 
-    protected $_callables = [];
+    /**
+     * @var callable[]
+     */
+    protected array $_callables = [];
 
-    public function add(callable $callable)
+    public function add(callable $callable) : static
     {
         if (!$this->contains($callable)) {
             $this->_callables[] = $callable;
@@ -16,7 +20,11 @@ trait CallableSetTrait
         return $this;
     }
 
-    public function extend($callables)
+    /**
+     * @param callable[] $callables
+     * @return $this
+     */
+    public function extend(iterable $callables) : static
     {
         $callables = func_num_args() > 1 ? func_get_args() : (array) $callables;
         foreach ($callables as $callable) {
@@ -25,12 +33,12 @@ trait CallableSetTrait
         return $this;
     }
 
-    public function remove(callable $callable)
+    public function remove(callable $callable) : static
     {
         return $this->pop($this->indexOf($callable));
     }
 
-    public function indexOf(callable $callable)
+    public function indexOf(callable $callable) : int
     {
 
         foreach ($this->_callables as $i=>$knownCallable) {
@@ -43,7 +51,7 @@ trait CallableSetTrait
 
     }
 
-    public function contains(callable $callable)
+    public function contains(callable $callable) : bool
     {
         try {
             return is_int($this->indexOf($callable));
@@ -52,37 +60,41 @@ trait CallableSetTrait
         }
     }
 
-    public function count()
+    public function count() : int
     {
         return count($this->_callables);
     }
 
-    public function getIterator()
+    public function getIterator() : \Iterator
     {
         return new ArrayIterator($this->_callables);
     }
 
-    public function offsetExists($offset)
+    #[ReturnTypeWillChange]
+    public function offsetExists(mixed $offset) : bool
     {
         return isset($this->_callables[$offset]);
     }
 
-    public function offsetGet($offset)
+    #[ReturnTypeWillChange]
+    public function offsetGet(mixed $offset) : callable
     {
         return $this->_callables[$offset];
     }
 
-    public function offsetSet($offset, $value)
+    #[ReturnTypeWillChange]
+    public function offsetSet(mixed $offset, mixed $value) : void
     {
         $this->_callables[$offset] = $value;
     }
 
-    public function offsetUnset($offset)
+    #[ReturnTypeWillChange]
+    public function offsetUnset(mixed $offset) : void
     {
         $this->pop($offset);
     }
 
-    public function pop($index=null)
+    public function pop(?int $index=null) : static
     {
 
         if($index === null){
@@ -96,7 +108,7 @@ trait CallableSetTrait
         return $this;
     }
 
-    protected function isSameCallable(callable $callable1, callable $callable2)
+    protected function isSameCallable(callable $callable1, callable $callable2) : bool
     {
 
         $callable1Type = gettype($callable1);
@@ -118,7 +130,9 @@ trait CallableSetTrait
             return false;
         }
 
+        /** @noinspection PhpParamsInspection */
         $callable1Id = spl_object_hash($callable1);
+        /** @noinspection PhpParamsInspection */
         $callable2Id = spl_object_hash($callable2);
 
         return ($callable1Id == $callable2Id);

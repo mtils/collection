@@ -2,7 +2,8 @@
 
 use \Iterator;
 
-interface IteratorInterface extends Iterator{
-    public function first();
-    public function last();
+interface IteratorInterface extends Iterator
+{
+    public function first() : mixed;
+    public function last() : mixed;
 }

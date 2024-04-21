@@ -3,13 +3,17 @@
 use \Iterator as PHPIterator;
 use \Countable;
 
+/**
+ * Not sure if this is used anywhere
+ * @deprecated
+ */
 class Iterator implements PHPIterator, Countable{
 
     protected $src;
 
-    protected $currentPosition = 0;
+    protected int $currentPosition = 0;
 
-    protected $currentValue = NULL;
+    protected mixed $currentValue = NULL;
     protected $currentKey = NULL;
 
     public function getSrc(){

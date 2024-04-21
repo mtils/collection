@@ -2,18 +2,22 @@
 
 namespace Collection;
 
-use \ReflectionClass;
-use \Countable;
-use \IteratorAggregate;
-use \ArrayAccess;
-use \LogicException;
-use \OutOfRangeException;
+use ArrayAccess;
 use Collection\Iterator\ArrayIterator;
+use Countable;
+use IteratorAggregate;
+use LogicException;
+use OutOfRangeException;
+use ReflectionClass;
+use ReturnTypeWillChange;
+
+use function array_values;
 
 
-class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
+class OrderedList implements Countable, IteratorAggregate, ArrayAccess
+{
 
-    protected $_array = array();
+    protected array $_array = [];
 
     public function __construct($src=NULL){
         if($src){
@@ -21,23 +25,27 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
         }
     }
 
-    public function append($value){
+    public function append($value): static
+    {
         $this->_array[] = $value;
         return $this;
     }
 
-    public function push($value){
+    public function push($value) : static
+    {
         return $this->append($value);
     }
 
-    public function extend($values){
+    public function extend(iterable $values) : static
+    {
         foreach($values as $value){
             $this->append($value);
         }
         return $this;
     }
 
-    public function insert($index, $value){
+    public function insert(int $index, mixed $value) : static
+    {
 
         $newArray = array();
         $pastInsertPosition=FALSE;
@@ -56,7 +64,7 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
             if($i == $index){
                 $newArray[$index] = $value;
                 $newArray[$i+1] = $this->_array[$i];
-                $pastInsertPosition = TRUE;
+                $pastInsertPosition = true;
             }
             else{
                 if(!$pastInsertPosition){
@@ -73,39 +81,28 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
         return $this;
     }
 
-    public function remove($value){
+    public function remove(mixed $value) : static
+    {
         return $this->pop($this->indexOf($value));
     }
 
-    public function pop($index=NULL){
+    public function pop(?int $index=null) : static
+    {
 
         if(is_null($index)){
             array_pop($this->_array);
             return $this;
         }
-
-        $count = $this->count();
-        $found = FALSE;
-        for($i=0; $i<$count; $i++){
-            if($i < $index){
-                $newArray[$i] = $this->_array[$i];
-            }
-            if($i == $index){
-                $found = TRUE;
-            }
-            if($i > $index){
-                $newArray[$i-1] = $this->_array[$i];
-            }
+        if (isset($this->_array[$index])) {
+            unset($this->_array[$index]);
+            $this->_array = array_values($this->_array);
         }
-        if($found){
-            $this->_array = $newArray;
-            return $this;
-        }
+        return $this;
     }
 
-    public function indexOf($value){
+    public function indexOf(mixed $value): int
+    {
         $count = $this->count();
-        $found = FALSE;
         for($i=0; $i<$count; $i++){
             if($value === $this->_array[$i]){
                 return $i;
@@ -114,23 +111,26 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
         throw new LogicException("Value $value not found");
     }
 
-    public function contains($value){
+    public function contains($value) : bool
+    {
         try{
             return is_int($this->indexOf($value));
         }
         catch(LogicException $e){
-            return FALSE;
+            return false;
         }
     }
 
-    public function count(){
+    public function count() : int
+    {
         if(func_num_args() > 0){
             return $this->countValue(func_get_arg(0));
         }
         return count($this->_array);
     }
 
-    public function countValue($value){
+    public function countValue(mixed $value) : int
+    {
         $count = 0;
         foreach($this->_array as $arrayVal){
             if($arrayVal === $value){
@@ -140,67 +140,89 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
         return $count;
     }
 
-    public function sort(){
+    public function sort() : static
+    {
         sort($this->_array);
         return $this;
     }
 
-    public function reverse(){
+    public function reverse() : static
+    {
         $this->_array = array_reverse($this->_array);
         return $this;
     }
 
-    public function getIterator(){
+    /** @noinspection PhpMissingReturnTypeInspection */
+    #[ReturnTypeWillChange]
+    public function getIterator()
+    {
         return new ArrayIterator($this->_array);
     }
-    
-    public function offsetExists($offset){
+
+    #[ReturnTypeWillChange]
+    public function offsetExists($offset) : bool
+    {
         return isset($this->_array[$offset]);
     }
-    
-    public function offsetGet($offset){
+
+    #[ReturnTypeWillChange]
+    public function offsetGet($offset) : mixed
+    {
         return $this->_array[$offset];
     }
-    
-    public function offsetSet($offset, $value){
+
+    #[ReturnTypeWillChange]
+    public function offsetSet($offset, $value) : void
+    {
         $this->_array[$offset] = $value;
     }
 
-    public function offsetUnset($offset){
+    #[ReturnTypeWillChange]
+    public function offsetUnset($offset) : void
+    {
         $this->pop($offset);
     }
 
-    public function src(){
+    public function src() : array
+    {
         return $this->_array;
     }
 
-    public function setSrc($src){
+    public function setSrc($src) : static
+    {
         if(is_array($src)){
             $this->_array = array_values($src);
-            return $this;
         }
+        return $this;
     }
 
-    public function first(){
+    public function first() : mixed
+    {
         if(isset($this->_array[0])){
             return $this->_array[0];
         }
+        return null;
     }
 
-    public function last(){
+    public function last() : mixed
+    {
         $lastIndex = (count($this->_array)-1);
         if(isset($this->_array[$lastIndex])){
             return $this->_array[$lastIndex];
         }
+        return null;
     }
 
     /**
      * Copies the list or its extended class
-     * 
+     *
      * @return OrderedList
+     * @noinspection PhpDocMissingThrowsInspection
      */
-    public function copy(){
+    public function copy() : static
+    {
         $reflection = new ReflectionClass($this);
+        /** @noinspection PhpUnhandledExceptionInspection */
         return $reflection->newInstance($this->_array);
     }
 
@@ -208,7 +230,9 @@ class OrderedList implements Countable, IteratorAggregate, ArrayAccess{
      * @see OrderedList::copy()
      * @return OrderedList
      */
-    public function __clone(){
-        return $this->copy();
+    public function __clone() : void
+    {
+        // This method made no sense. It is just here to minimize changed
+        $this->copy();
     }
 }

@@ -1,11 +1,15 @@
-<?php namespace Collection;
+<?php
 
+namespace Collection;
 
 use ArrayAccess;
 use Countable;
+use ReturnTypeWillChange;
 use RuntimeException;
 use IteratorAggregate;
 use Collection\Iterator\ArrayIterator;
+
+use function str_ends_with;
 
 /**
  * A NestedArray builds a nested array from a flat one with paths.
@@ -59,7 +63,7 @@ use Collection\Iterator\ArrayIterator;
  *
  * If you query the array with a single dot you will get only the unnested
  * properties $nestedArray['.']:
- * 
+ *
  * [
  *     'id'            => 13,
  *     'name'          => 'Michael',
@@ -80,36 +84,36 @@ use Collection\Iterator\ArrayIterator;
  * like a function:
  * $nestedArray('category.parent') => Returns new nested array with the
  * resulting array of this query
- * 
+ *
  **/
 class NestedArray implements ArrayAccess, Countable, IteratorAggregate
 {
 
     /**
-     * @var array
+     * @var ?array
      */
-    protected $array;
+    protected ?array $array;
+
+    /**
+     * @var ?array
+     **/
+    protected ?array $rootCache;
 
     /**
      * @var array
      **/
-    protected $rootCache;
+    protected ?array $nestedCache;
 
     /**
-     * @var array
-     **/
-    protected $nestedCache;
-
-    /**
-     * 
+     *
      * @var string
      **/
-    protected $querySeparator = '.';
+    protected string $querySeparator = '.';
 
     /**
      * @var string
      **/
-    protected $separator = '.';
+    protected string $separator = '.';
 
     public function __construct(array $array, $separator='.')
     {
@@ -124,7 +128,8 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param string $offset
      * @return bool
      **/
-    public function offsetExists($offset)
+    #[ReturnTypeWillChange]
+    public function offsetExists($offset): bool
     {
 
         if ($offset == $this->querySeparator) {
@@ -142,12 +147,13 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
 
     /**
      * Returns the value of key $offset. Goes one level deep and returns the
-     * value. If it is a array it will be returned.
+     * value. If it is an array it will be returned.
      *
      * @param mixed $offset
      * @return mixed
      **/
-    public function offsetGet($offset)
+    #[ReturnTypeWillChange]
+    public function offsetGet(mixed $offset): mixed
     {
 
         if ($offset == $this->querySeparator) {
@@ -158,7 +164,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
             return $this->array[$offset];
         }
 
-        if (static::endsWith($offset, $this->querySeparator)) {
+        if (str_ends_with($offset, $this->querySeparator)) {
             $cleaned = static::removeTrailing($offset);
             return $this->sub($cleaned)->root();
         }
@@ -172,9 +178,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param mixed $offset
      * @param mixed $value
      * @return void
-     * @throws \RuntimeException
+     * @throws RuntimeException
      **/
-    public function offsetSet($offset, $value)
+    #[ReturnTypeWillChange]
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         throw new RuntimeException('Setting values is not supported');
     }
@@ -184,9 +191,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @param mixed $offset
      * @return void
-     * @throws \RuntimeException
+     * @throws RuntimeException
      **/
-    public function offsetUnset($offset)
+    #[ReturnTypeWillChange]
+    public function offsetUnset(mixed $offset): void
     {
         throw new RuntimeException('Currently only reading is supported');
     }
@@ -196,7 +204,8 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @return int
      **/
-    public function count()
+    #[ReturnTypeWillChange]
+    public function count(): int
     {
         return count($this->root());
     }
@@ -204,9 +213,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     /**
      * Iterates over the object
      *
-     * @return \Collection\Iterator\ArrayIterator
+     * @return ArrayIterator
      **/
-    public function getIterator()
+    #[ReturnTypeWillChange]
+    public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->nested());
     }
@@ -215,9 +225,9 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * Returns subgroup with name $offset. Same as offsetGet
      *
      * @param mixed $offset
-     * @return array (should, but dont have to)
+     * @return mixed
      **/
-    public function group($offset)
+    public function group(mixed $offset): mixed
     {
         return static::get(
             $this->nested(), $offset, $this->querySeparator
@@ -225,14 +235,14 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     }
 
     /**
-     * Returns a filtered version which contains only unnested keys
+     * Returns a filtered version which contains only not-nested keys
      * This is handy for request hierarchies where you have a form which
      * contains some direct properties of your model and some nested for
      * relations. root() would than return only the root values
      *
      * @return array
      **/
-    public function root()
+    public function root(): array
     {
 
         if ($this->rootCache !== null) {
@@ -253,7 +263,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @return array
      **/
-    public function nested()
+    public function nested(): array
     {
 
         if( $this->nestedCache === null) {
@@ -265,12 +275,12 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
     }
 
     /**
-     * Returns a new NestedArray from subkey $offset
+     * Returns a new NestedArray from sub-key $offset
      *
      * @param mixed $offset
      * @return static
      **/
-    public function sub($offset)
+    public function sub(mixed $offset): static
     {
         $array = $this->group($offset);
         if (is_array($array)) {
@@ -285,8 +295,11 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @param string $offset
      * @return static
-     **/
-    public function __invoke($offset='.')
+     *
+     * @noinspection PhpMissingReturnTypeInspection
+     */
+    #[ReturnTypeWillChange]
+    public function __invoke(string $offset='.')
     {
         if ($offset == '.') {
             return $this;
@@ -299,7 +312,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @return array
      **/
-    public function getSrc()
+    public function getSrc(): array
     {
         return $this->array;
     }
@@ -309,7 +322,9 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @param array $src
      * @return static
-     **/
+     *
+     * @noinspection PhpMissingReturnTypeInspection
+     */
     public function setSrc(array $src)
     {
         $this->array = $src;
@@ -319,13 +334,13 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
 
     /**
      * Direct access to the "array-nester". Put a flat array in this method
-     * and it will return a recursivly nested version
+     * and it will return a recursively nested version
      *
      * @param array $flat
      * @param string $delimiter
      * @return array
      **/
-    public static function toNested(array $flat, $delimiter = '.')
+    public static function toNested(array $flat, string $delimiter = '.'): array
     {
 
         $tree = [];
@@ -364,20 +379,21 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * property.child.name
      *
      * @param array $nested
-     * @param string $key
+     * @param ?string $key
      * @param string $delimiter
-     **/
-    public static function get(array $nested, $key, $delimiter='.')
+     * @return array|mixed|null
+     */
+    public static function get(array $nested, ?string $key, string $delimiter='.'): mixed
     {
 
-        if (is_null($key)) return $nested;
+        if ($key === null) return $nested;
 
         if (isset($nested[$key])) return $nested[$key];
 
         foreach (explode($delimiter, $key) as $segment) {
             if ( ! is_array($nested) || ! array_key_exists($segment, $nested))
             {
-                return;
+                return null;
             }
 
             $nested = $nested[$segment];
@@ -393,12 +409,12 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param string $separator
      * @return array
      **/
-    public static function withoutNested(array $flat, $separator='.')
+    public static function withoutNested(array $flat, string $separator='.'): array
     {
         $root = [];
 
         foreach ($flat as $key=>$value) {
-            if (strpos($key, $separator) === false && !is_array($value)) {
+            if (!str_contains($key, $separator) && !is_array($value)) {
                 $root[$key] = $value;
             }
         }
@@ -413,7 +429,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param string $connector Levels connector
      * @return array
      **/
-    public static function flat(array $nested, $connector = '.')
+    public static function flat(array $nested, string $connector = '.'): array
     {
         $result = [];
         static::flatArray($result, $nested, $connector);
@@ -425,10 +441,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @param array $result Resulting array
      * @param array $array Source array
-     * @param string $prefix Key's prefix
+     * @param string|null $prefix Key's prefix
      * @param string $connector Levels connector
      **/
-    protected static function flatArray(array &$result, array $array, $connector = '.', $prefix = null)
+    protected static function flatArray(array &$result, array $array, string $connector = '.', ?string $prefix = null): void
     {
 
         foreach ($array as $key => $value) {
@@ -447,10 +463,10 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * Splits the path into an array
      *
      * @param string $path
-     * @param string $separator (degault '.')
+     * @param string $separator (default '.')
      * @return array
      **/
-    public static function splitPath($path, $separator='.')
+    public static function splitPath(string $path, string $separator='.'): array
     {
         $regex = '/(?<=\w)(' . preg_quote($separator, '/') . ')(?=\w)/';
         return preg_split($regex, $path, -1);//, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
@@ -462,10 +478,11 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param string $path
      * @param string $needle
      * @return bool
+     * @deprecated use php`s str_ends_with()
      **/
-    public static function endsWith($path, $needle)
+    public static function endsWith(string $path, string $needle): bool
     {
-        return (string) $needle === substr($path, -strlen($needle));
+        return str_ends_with($path, $needle);
     }
 
     /**
@@ -474,7 +491,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      * @param string $path
      * @return string
      **/
-    protected static function removeTrailing($path)
+    protected static function removeTrailing(string $path) : string
     {
         return substr($path, 0, strlen($path)-1);
     }
@@ -484,7 +501,7 @@ class NestedArray implements ArrayAccess, Countable, IteratorAggregate
      *
      * @return void
      **/
-    protected function reset()
+    protected function reset() : void
     {
         $this->rootCache = null;
         $this->nestedCache = null;

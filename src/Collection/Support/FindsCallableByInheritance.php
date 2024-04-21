@@ -18,6 +18,7 @@ use ReflectionClass;
  * this on will be used as long as you do not assign: addCallable(User, $callable)
  * The inheritance will be searched from top down and return the first matching
  * provider
+ * @deprecated Seems to be not used anymore
  **/
 trait FindsCallableByInheritance
 {
@@ -25,7 +26,7 @@ trait FindsCallableByInheritance
     /**
      * @var array
      **/
-    protected $_callables = [
+    protected array $_callables = [
         'default' => []
     ];
 
@@ -34,7 +35,7 @@ trait FindsCallableByInheritance
      *
      * @var array
      **/
-    protected $_class2Callable = [];
+    protected array $_class2Callable = [];
 
 
     /**
@@ -43,10 +44,10 @@ trait FindsCallableByInheritance
      *
      * @param string $class
      * @param callable $provider
-     * @param type $type (optional)
+     * @param string $type (optional)
      * @return self
      **/
-    public function addCallable($class, callable $provider, $type='default')
+    public function addCallable(string $class, callable $provider, string $type='default') : static
     {
         if (!isset($this->_callables[$type])) {
             $this->_callables[$type] = [];
@@ -63,7 +64,7 @@ trait FindsCallableByInheritance
      * @param string $type (optional)
      * @return callable|null
      **/
-    protected function nearestForClass($findClass, $type='default')
+    protected function nearestForClass(string $findClass, string $type='default') : ?callable
     {
 
         $cacheId = "$type|$findClass";
@@ -73,7 +74,7 @@ trait FindsCallableByInheritance
         }
 
         if (!isset($this->_callables[$type])) {
-            return;
+            return null;
         }
 
         if (isset($this->_callables[$type][$findClass])) {
@@ -84,7 +85,7 @@ trait FindsCallableByInheritance
         $providers = &$this->_callables[$type];
 
         if (!$nearest = $this->findNearestForClass($providers, $findClass)) {
-            return;
+            return null;
         }
 
         $this->_class2Callable[$type][$findClass] = $nearest;
@@ -101,12 +102,12 @@ trait FindsCallableByInheritance
      * @param string $findClass
      * @return callable|null
      **/
-    protected function findNearestForClass(&$providers, $findClass)
+    protected function findNearestForClass(array $providers, string $findClass) : ?callable
     {
         $all = $this->findAllForClass($providers, $findClass);
 
         if (!count($all)) {
-            return;
+            return null;
         }
 
         if (count($all) == 1) {
@@ -119,6 +120,8 @@ trait FindsCallableByInheritance
             }
         }
 
+        return null;
+
     }
 
     /**
@@ -129,7 +132,7 @@ trait FindsCallableByInheritance
      * @param string $findClass
      * @return array
      **/
-    protected function findAllForClass(&$providers, $findClass)
+    protected function findAllForClass(array $providers, string $findClass) : array
     {
 
         $all = [];
@@ -150,9 +153,12 @@ trait FindsCallableByInheritance
      *
      * @param object|string $object
      * @return array
-     **/
-    public static function classInheritance($object){
-
+     *
+     * @noinspection PhpDocMissingThrowsInspection
+     */
+    public static function classInheritance(object|string $object) : array
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
         $class = new ReflectionClass($object);
         $classNames = [$class->getName()];
 

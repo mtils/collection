@@ -3,64 +3,92 @@
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use LogicException;
 
 class ColumnList  implements Countable, IteratorAggregate{
 
-    protected $_columns = array();
+    /**
+     * @var Column[]
+     */
+    protected array $_columns = [];
 
-    public $_src;
+    public array $_src = [];
 
-    protected $valueAccessor;
+    /**
+     * @var ?callable
+     */
+    protected mixed $valueAccessor;
 
-    public function columns(){
+    /**
+     * @return Column[]
+     */
+    public function columns() : array
+    {
         return $this->_columns;
     }
 
-    public function append(Column $column){
+    public function append(Column $column) : static
+    {
         $column->setColumnList($this);
         $this->_columns[] = $column;
         return $this;
     }
 
-    public function push(Column $column){
+    public function push(Column $column) : static
+    {
         return $this->append($column);
     }
 
-    public function indexOf($column){
+    /**
+     * @param Column $column
+     * @return int
+     */
+    public function indexOf($column) : int
+    {
         $count = $this->count();
-        $found = FALSE;
         for($i=0; $i<$count; $i++){
-            if($column === $this->_array[$i]){
+            if($column === $this->_columns[$i]){
                 return $i;
             }
         }
-        throw new LogicException("Value $column not found");
+        throw new LogicException("Value " . $column->getName() . " not found");
     }
 
-    public function count(){
+    public function count() : int
+    {
         return count($this->_columns);
     }
 
-    public function getIterator(){
+    public function getIterator() : \Iterator
+    {
         return new ArrayIterator($this->_columns);
     }
 
-    public function getSrc(){
+    public function getSrc() : mixed
+    {
         return $this->_src;
     }
 
-    public function setSrc($src){
+    public function setSrc(mixed $src) : static
+    {
         $this->_src = $src;
         return $this;
     }
 
-    public static function create(){
+    public static function create()
+    {
         $class = get_called_class();
         return new $class();
     }
 
-    public static function fromArray($array){
+    /**
+     * @param Column[]|string[]|array<string,string> $array
+     * @return static
+     */
+    public static function fromArray(array $array) : static
+    {
 
+        /** @var ColumnList $list */
         $list = static::create();
 
         // Numeric array
@@ -68,14 +96,13 @@ class ColumnList  implements Countable, IteratorAggregate{
             foreach($array as $accessor){
                 $list->append(Column::create()->setAccessor($accessor));
             }
+            return $list;
         }
         // Assoc array
-        else{
-            foreach($array as $accessor=>$title){
-                $list->append(Column::create()
-                                      ->setAccessor($accessor)
-                                      ->setTitle($title));
-            }
+        foreach($array as $accessor=>$title){
+            $list->append(Column::create()
+                                  ->setAccessor($accessor)
+                                  ->setTitle($title));
         }
         return $list;
     }

@@ -4,30 +4,30 @@ namespace Collection;
 
 class StringList extends OrderedList{
 
-    public $delimiter = ' ';
-    public $prefix = '';
-    public $suffix = '';
+    public string $delimiter = ' ';
+    public string $prefix = '';
+    public string $suffix = '';
 
-    public function __construct($src=NULL, $delimiter=' '){
+    public function __construct(?array $src=null, string $delimiter=' '){
         parent::__construct($src);
         $this->delimiter = $delimiter;
     }
 
-    public function __toString(){
+    public function __toString() : string
+    {
         return $this->prefix . implode($this->delimiter, $this->_array) .
                $this->suffix;
     }
 
     /**
      * Creates a Stringlist from a string.
-     * 
+     *
      * @param string $string
      * @param string $separator
      * @return StringList
      */
-    public static function fromString($string, $separator=' '){
-
-        $string = (string)$string;
+    public static function fromString(string $string, string $separator=' ') : static
+    {
 
         if($separator === ''){
             return new StringList(str_split($string),'');
@@ -50,11 +50,12 @@ class StringList extends OrderedList{
 
     /**
      * Returns a copy
-     * 
+     *
      * @return StringList
      * @see OrderedList::copy()
      */
-    public function copy(){
+    public function copy() : static
+    {
         $copy = parent::copy();
         $copy->delimiter = $this->delimiter;
         $copy->prefix = $this->prefix;
