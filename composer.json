@@ -20,7 +20,7 @@
   "autoload": {
     "psr-4": {
       "Collection\\": "src/Collection",
-      "Collection\\Test": "tests"
+      "Collection\\Test\\": "tests"
     }
   },
   "minimum-stability": "dev"
