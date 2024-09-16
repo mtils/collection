@@ -12,7 +12,7 @@ class ColumnList  implements Countable, IteratorAggregate{
      */
     protected array $_columns = [];
 
-    public array $_src = [];
+    public mixed $_src = [];
 
     /**
      * @var ?callable

@@ -9,12 +9,22 @@ namespace Collection\Test;
 use Collection\StringList;
 use PHPUnit\Framework\TestCase;
 
+use function iterator_to_array;
+
 class StringListTest extends TestCase
 {
     public function testInitialization()
     {
         $list = new StringList(['hello', 'world'], ', ');
         $this->assertEquals('hello, world', (string) $list);
+    }
+
+    public function testEmptyInitialization()
+    {
+        $list = new StringList();
+        $this->assertEquals('', (string) $list);
+        $this->assertCount(0, $list);
+        $this->assertSame([], iterator_to_array($list));
     }
 
     public function testToString()
