@@ -5,19 +5,21 @@ use ReturnTypeWillChange;
 use TypeError;
 
 use function get_class;
+use function gettype;
 use function is_callable;
+use function is_object;
 
 class FullProxy implements ArrayAccess
 {
 
-    protected object $src;
+    protected mixed $src;
 
     /**
      * @var array<string,string>
      */
     protected static array $staticClassNames = [];
 
-    public function __construct(?object $src=null){
+    public function __construct(mixed $src=null){
         $this->setSrc($src);
     }
 
@@ -26,10 +28,12 @@ class FullProxy implements ArrayAccess
         return $this->src;
     }
 
-    public function setSrc(object $src) : static
+    public function setSrc(mixed $src) : static
     {
         $this->src = $src;
-        self::$staticClassNames[static::class] = get_class($src);
+        if (is_object($src)) {
+            self::$staticClassNames[static::class] = get_class($src);
+        }
         return $this;
     }
 
