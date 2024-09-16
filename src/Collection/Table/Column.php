@@ -86,7 +86,7 @@ class Column extends BaseColumn{
         return $this->isSortColumn();
     }
 
-    public function getSortOrder() : int
+    public function getSortOrder() : string
     {
         return $this->table->getSortOrder($this->accessor);
     }
