@@ -8,7 +8,7 @@ class DottedObjectAccess
 
     public string $dot = '.';
 
-    public function __invoke(Column $column, $src, $accessor) : string
+    public function __invoke(Column $column, $src, $accessor) : mixed
     {
 
         if(!str_contains($accessor, $this->dot)){
