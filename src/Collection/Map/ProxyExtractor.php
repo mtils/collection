@@ -12,16 +12,26 @@ class ProxyExtractor extends Extractor{
      */
     protected ?Extractor $srcExtractor = NULL;
 
+    /**
+     * @var ?callable
+     */
+    protected $callableExtractor;
+
     protected ?ColumnList $columns = null;
 
     public function __construct(string|callable|null $keyAccessor=null, ?string $valueAccessor=null)
     {
         parent::__construct();
-        if(is_callable($keyAccessor)){
+        if ($keyAccessor instanceof Extractor) {
             $this->srcExtractor = $keyAccessor;
             return;
         }
-        $this->srcExtractor = new Extractor($keyAccessor, $valueAccessor);
+        if(!is_callable($keyAccessor)){
+            $this->srcExtractor = new Extractor($keyAccessor, $valueAccessor);
+            return;
+        }
+        $this->callableExtractor = $keyAccessor;
+        $this->srcExtractor = new Extractor(null, $valueAccessor);
 
     }
 
@@ -59,7 +69,11 @@ class ProxyExtractor extends Extractor{
 
     public function __invoke($originalKey, $item, $position=null) : array
     {
-        list($key, $value) = $this->srcExtractor->__invoke($originalKey, $item, $position);
+        if ($this->callableExtractor) {
+            list($key, $value) = call_user_func($this->callableExtractor, $originalKey, $item, $position);
+        } else {
+            list($key, $value) = $this->srcExtractor->__invoke($originalKey, $item, $position);
+        }
 
         $proxy = $this->createProxy($item, $key, $value, $position);
         $this->setProxyValues($proxy, $key, $value, $position);
